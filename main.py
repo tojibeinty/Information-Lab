@@ -1,208 +1,138 @@
-import json
-from telegram import InlineKeyboardButton, InlineKeyboardMarkup
-from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, CallbackQueryHandler, filters
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
+from telegram.ext import Application, CommandHandler, CallbackQueryHandler, MessageHandler, filters, ContextTypes
 
-# ========== إعداد البيانات ==========
-DB_PATH = "./users_db.json"
-TESTS_PATH = "./tests_db.json"
-ADMINS = [6263195701]  # ضع هنا رقمك في تلغرام
+# توكن البوت
+BOT_TOKEN = "8402805384:AAG-JnszBhh8GMDIvf1oeKNUvXi07MOXSWo"
 
-def load_db(path):
-    try:
-        with open(path, "r") as f:
-            return json.load(f)
-    except:
-        return {}
+# معرف الأدمن
+ADMIN_ID = 6263195701
 
-def save_db(db, path):
-    with open(path, "w") as f:
-        json.dump(db, f, indent=2)
-
-users = load_db(DB_PATH)
-tests_db = load_db(TESTS_PATH)
-
-def get_user(chat_id):
-    chat_id = str(chat_id)
-    if chat_id not in users:
-        users[chat_id] = {
-            "awaiting_test": None,
-            "adding_step": None,
-            "new_test": {},
-            "range_step": None
-        }
-    return users[chat_id]
-
-# ========== التصنيفات ==========
-CATEGORIES = {
-    "CBC": {"title": "🩸 تحاليل الدم", "tests": ["WBC", "RBC", "Hb", "Hct", "Platelets"]},
-    "CHEM": {"title": "🧪 كيمياء", "tests": ["FastingGlucose", "RandomGlucose", "Urea", "Creatinine", "ALT", "AST"]},
-    "HORM": {"title": "🔥 هرمونات", "tests": ["TSH", "FreeT4", "Prolactin", "Testosterone"]},
+# قاعدة بيانات التحاليل
+tests_db = {
+    "CBC": {
+        "full_name": "Complete Blood Count",
+        "description": "تحليل شامل لقياس مكونات الدم وتقييم الصحة العامة.",
+        "normal_range": {
+            "male": "4.7-6.1 مليون/ميكرولتر",
+            "female": "4.2-5.4 مليون/ميكرولتر",
+            "children": "4.1-5.5 مليون/ميكرولتر",
+            "newborn": "4.8-7.1 مليون/ميكرولتر",
+            "elderly": "4.0-5.2 مليون/ميكرولتر"
+        },
+        "image": None
+    }
 }
 
-# ========== الكيبورد ==========
-def kb_category_root():
-    return InlineKeyboardMarkup([
-        [InlineKeyboardButton(cat["title"], callback_data=f"cat:{key}")]
-        for key, cat in CATEGORIES.items()
-    ])
+user_states = {}
 
-def kb_tests_for(category_key):
-    cat = CATEGORIES.get(category_key)
-    if not cat:
-        return kb_category_root()
-    buttons = [[InlineKeyboardButton(test, callback_data=f"test:{test}")] for test in cat["tests"]]
-    buttons.append([InlineKeyboardButton("🔙 الأنواع", callback_data="home")])
-    return InlineKeyboardMarkup(buttons)
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    keyboard = []
+    for test in tests_db.keys():
+        keyboard.append([InlineKeyboardButton(test, callback_data=f"test:{test}")])
 
-# ========== أوامر البوت ==========
-async def start(update, context):
-    chat_id = update.effective_chat.id
-    await context.bot.send_message(chat_id, "👋 أهلاً بك! اختر نوع التحليل:", reply_markup=kb_category_root())
+    if update.effective_chat.id == ADMIN_ID:
+        keyboard.append([InlineKeyboardButton("➕ إضافة تحليل", callback_data="add_test")])
 
-async def add_test(update, context):
-    chat_id = update.effective_chat.id
-    if chat_id not in ADMINS:
-        await context.bot.send_message(chat_id, "❌ هذا الأمر مخصص للإدمن فقط.")
-        return
-    u = get_user(chat_id)
-    u["adding_step"] = "name"
-    u["new_test"] = {}
-    await context.bot.send_message(chat_id, "📝 أدخل اسم التحليل الجديد:")
+    await update.message.reply_text(
+        "📋 اختر التحليل:",
+        reply_markup=InlineKeyboardMarkup(keyboard)
+    )
 
-# ========== التعامل مع الرسائل ==========
-async def handle_message(update, context):
-    chat_id = update.effective_chat.id
-    text = update.message.text
-    u = get_user(chat_id)
+async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    data = query.data
+    chat_id = query.message.chat_id
 
-    # ---- إضافة تحليل جديد (Admin Only) ----
-    if u.get("adding_step"):
-        if chat_id not in ADMINS:
-            await context.bot.send_message(chat_id, "❌ لا يمكنك إضافة تحليل.")
-            u["adding_step"] = None
+    if data.startswith("test:"):
+        _, test_name = data.split(":")
+        data_test = tests_db.get(test_name)
+        if not data_test:
+            await query.answer("❌ لا يوجد هذا التحليل.")
             return
-
-        step = u["adding_step"]
-
-        if step == "name":
-            u["new_test"]["name"] = text
-            u["adding_step"] = "full_name"
-            await context.bot.send_message(chat_id, "أدخل الاسم العلمي الكامل:")
-            return
-
-        elif step == "full_name":
-            u["new_test"]["full_name"] = text
-            u["adding_step"] = "description"
-            await context.bot.send_message(chat_id, "أدخل وصف التحليل علميًا:")
-            return
-
-        elif step == "description":
-            u["new_test"]["description"] = text
-            u["adding_step"] = "normal_range"
-            u["new_test"]["normal_range"] = {}
-            u["range_step"] = "male"
-            await context.bot.send_message(chat_id, "أدخل النطاق الطبيعي للذكر:")
-            return
-
-        elif step == "normal_range":
-            u["new_test"]["normal_range"][u["range_step"]] = text
-            next_step = {"male": "female", "female": "children", "children": "newborn", "newborn": "elderly"}
-            if u["range_step"] in next_step:
-                u["range_step"] = next_step[u["range_step"]]
-                await context.bot.send_message(chat_id, f"أدخل النطاق الطبيعي لـ {u['range_step']}:")
-                return
-            else:
-                u["adding_step"] = "image"
-                await context.bot.send_message(chat_id, "أدخل اسم ملف الصورة أو 'none':")
-                return
-
-        elif step == "image":
-            u["new_test"]["image"] = None if text.lower() == "none" else text
-            u["adding_step"] = "category"
-            await context.bot.send_message(chat_id, "أدخل التصنيف: CBC / CHEM / HORM")
-            return
-
-        elif step == "category":
-            if text not in ["CBC", "CHEM", "HORM"]:
-                await context.bot.send_message(chat_id, "❌ التصنيف غير صحيح.")
-                return
-            u["new_test"]["category"] = text
-
-            name = u["new_test"]["name"]
-            tests_db[name] = {
-                "full_name": u["new_test"]["full_name"],
-                "description": u["new_test"]["description"],
-                "normal_range": u["new_test"]["normal_range"],
-                "image": u["new_test"]["image"]
-            }
-            cat = u["new_test"]["category"]
-            if name not in CATEGORIES[cat]["tests"]:
-                CATEGORIES[cat]["tests"].append(name)
-
-            save_db(tests_db, TESTS_PATH)
-            u["adding_step"] = None
-            u["new_test"] = {}
-            await context.bot.send_message(chat_id, f"✅ تم إضافة التحليل {name} تحت {cat}")
-            return
-
-    # ---- عرض تحليل ----
-    if u.get("awaiting_test"):
-        test_name = u["awaiting_test"]
-        data = tests_db.get(test_name)
-        if not data:
-            await context.bot.send_message(chat_id, "❌ لا يوجد هذا التحليل.")
-            u["awaiting_test"] = None
-            return
-
-        msg = f"🔹 التحليل: {data['full_name']}\n💡 الوصف: {data['description']}\n📊 النطاق الطبيعي:\n"
-        for k, v in data["normal_range"].items():
-            emoji = {"male": "👨 ذكر", "female": "👩 أنثى", "children": "🧒 أطفال", "newborn": "👶 حديث الولادة", "elderly": "👵 كبار السن"}.get(k, k)
+        
+        msg = f"🔹 التحليل: {data_test['full_name']}\n💡 الوصف: {data_test['description']}\n📊 النطاق الطبيعي:\n"
+        for k, v in data_test["normal_range"].items():
+            emoji = {"male":"👨 ذكر","female":"👩 أنثى","children":"🧒 أطفال","newborn":"👶 حديث الولادة","elderly":"👵 كبار السن"}.get(k,k)
             msg += f"{emoji}: {v}\n"
 
-        if data.get("image"):
+        if data_test.get("image"):
             try:
-                await context.bot.send_photo(chat_id, photo=open(data["image"], "rb"), caption=msg)
+                await context.bot.send_photo(chat_id, photo=open(data_test["image"],"rb"), caption=msg)
             except:
                 await context.bot.send_message(chat_id, msg)
         else:
             await context.bot.send_message(chat_id, msg)
-
-        u["awaiting_test"] = None
-        return
-
-# ========== التعامل مع الأزرار ==========
-async def handle_callback(update, context):
-    query = update.callback_query
-    chat_id = query.message.chat.id
-    data = query.data
-    u = get_user(chat_id)
-
-    if data == "home":
+        
         await query.answer()
-        await query.edit_message_text("اختر التصنيف:", reply_markup=kb_category_root())
         return
 
-    if data.startswith("cat:"):
-        _, cat = data.split(":")
+    elif data == "add_test":
+        if chat_id != ADMIN_ID:
+            await query.answer("❌ الأمر للأدمن فقط.", show_alert=True)
+            return
+        user_states[chat_id] = {"step": "name"}
+        await context.bot.send_message(chat_id, "🆕 أدخل اسم التحليل (قصير):")
         await query.answer()
-        await query.edit_message_text(f"{CATEGORIES[cat]['title']} — اختر التحليل:", reply_markup=kb_tests_for(cat))
+
+async def add_test_steps(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    chat_id = update.message.chat_id
+    if chat_id != ADMIN_ID:
         return
 
-    if data.startswith("test:"):
-        _, test = data.split(":")
-        u["awaiting_test"] = test
-        await query.answer()
-        await context.bot.send_message(chat_id, "🔹 التحليل محدد. اضغط /start لإظهار التفاصيل.")
+    if chat_id not in user_states:
         return
 
-# ========== تشغيل البوت ==========
-if __name__ == "__main__":
-    BOT_TOKEN = "8402805384:AAG-JnszBhh8GMDIvf1oeKNUvXi07MOXSWo"
-    app = ApplicationBuilder().token(BOT_TOKEN).build()
+    step = user_states[chat_id]["step"]
+
+    if step == "name":
+        user_states[chat_id]["short_name"] = update.message.text
+        user_states[chat_id]["step"] = "full_name"
+        await update.message.reply_text("📄 أدخل الاسم العلمي الكامل:")
+    
+    elif step == "full_name":
+        user_states[chat_id]["full_name"] = update.message.text
+        user_states[chat_id]["step"] = "description"
+        await update.message.reply_text("💡 أدخل وصف التحليل:")
+    
+    elif step == "description":
+        user_states[chat_id]["description"] = update.message.text
+        user_states[chat_id]["step"] = "normal_range"
+        user_states[chat_id]["normal_range"] = {}
+        await update.message.reply_text("📊 أدخل النطاق الطبيعي للذكور:")
+    
+    elif step == "normal_range":
+        nr = user_states[chat_id]["normal_range"]
+        if "male" not in nr:
+            nr["male"] = update.message.text
+            await update.message.reply_text("📊 أدخل النطاق الطبيعي للإناث:")
+        elif "female" not in nr:
+            nr["female"] = update.message.text
+            await update.message.reply_text("📊 أدخل النطاق الطبيعي للأطفال:")
+        elif "children" not in nr:
+            nr["children"] = update.message.text
+            await update.message.reply_text("📊 أدخل النطاق الطبيعي لحديثي الولادة:")
+        elif "newborn" not in nr:
+            nr["newborn"] = update.message.text
+            await update.message.reply_text("📊 أدخل النطاق الطبيعي لكبار السن:")
+        elif "elderly" not in nr:
+            nr["elderly"] = update.message.text
+            tests_db[user_states[chat_id]["short_name"]] = {
+                "full_name": user_states[chat_id]["full_name"],
+                "description": user_states[chat_id]["description"],
+                "normal_range": nr,
+                "image": None
+            }
+            await update.message.reply_text("✅ تم حفظ التحليل.")
+            del user_states[chat_id]
+
+def main():
+    app = Application.builder().token(BOT_TOKEN).build()
 
     app.add_handler(CommandHandler("start", start))
-    app.add_handler(CommandHandler("addtest", add_test))
-    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
     app.add_handler(CallbackQueryHandler(handle_callback))
+    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, add_test_steps))
 
     app.run_polling()
+
+if __name__ == "__main__":
+    main()
