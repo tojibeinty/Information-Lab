@@ -1,6 +1,6 @@
 import json
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
-from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, CallbackQueryHandler, filters, ContextTypes
+from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, CallbackQueryHandler, filters
 
 # ========== إعداد البيانات ==========
 DB_PATH = "./users_db.json"
@@ -28,17 +28,18 @@ def get_user(chat_id):
             "awaiting_test": None,
             "adding_step": None,
             "new_test": {},
+            "range_step": None
         }
     return users[chat_id]
 
 # ========== التصنيفات ==========
 CATEGORIES = {
-    "CBC":{"title":"🩸 تحاليل الدم","tests":["WBC","RBC","Hb","Hct","Platelets"]},
-    "CHEM":{"title":"🧪 كيمياء","tests":["FastingGlucose","RandomGlucose","Urea","Creatinine","ALT","AST"]},
-    "HORM":{"title":"🔥 هرمونات","tests":["TSH","FreeT4","Prolactin","Testosterone"]},
+    "CBC": {"title": "🩸 تحاليل الدم", "tests": ["WBC", "RBC", "Hb", "Hct", "Platelets"]},
+    "CHEM": {"title": "🧪 كيمياء", "tests": ["FastingGlucose", "RandomGlucose", "Urea", "Creatinine", "ALT", "AST"]},
+    "HORM": {"title": "🔥 هرمونات", "tests": ["TSH", "FreeT4", "Prolactin", "Testosterone"]},
 }
 
-# ========== كيبورد ==========
+# ========== الكيبورد ==========
 def kb_category_root():
     return InlineKeyboardMarkup([
         [InlineKeyboardButton(cat["title"], callback_data=f"cat:{key}")]
@@ -61,7 +62,7 @@ async def start(update, context):
 async def add_test(update, context):
     chat_id = update.effective_chat.id
     if chat_id not in ADMINS:
-        await context.bot.send_message(chat_id, "❌ لا يمكنك استخدام هذا الأمر.")
+        await context.bot.send_message(chat_id, "❌ هذا الأمر مخصص للإدمن فقط.")
         return
     u = get_user(chat_id)
     u["adding_step"] = "name"
@@ -74,49 +75,61 @@ async def handle_message(update, context):
     text = update.message.text
     u = get_user(chat_id)
 
-    # ---- إضافة تحليل جديد ----
+    # ---- إضافة تحليل جديد (Admin Only) ----
     if u.get("adding_step"):
+        if chat_id not in ADMINS:
+            await context.bot.send_message(chat_id, "❌ لا يمكنك إضافة تحليل.")
+            u["adding_step"] = None
+            return
+
         step = u["adding_step"]
-        if step=="name":
+
+        if step == "name":
             u["new_test"]["name"] = text
-            u["adding_step"]="full_name"
-            await context.bot.send_message(chat_id,"أدخل الاسم العلمي الكامل:")
+            u["adding_step"] = "full_name"
+            await context.bot.send_message(chat_id, "أدخل الاسم العلمي الكامل:")
             return
-        elif step=="full_name":
-            u["new_test"]["full_name"]=text
-            u["adding_step"]="description"
-            await context.bot.send_message(chat_id,"أدخل وصف التحليل علميًا:")
+
+        elif step == "full_name":
+            u["new_test"]["full_name"] = text
+            u["adding_step"] = "description"
+            await context.bot.send_message(chat_id, "أدخل وصف التحليل علميًا:")
             return
-        elif step=="description":
-            u["new_test"]["description"]=text
-            u["adding_step"]="normal_range"
+
+        elif step == "description":
+            u["new_test"]["description"] = text
+            u["adding_step"] = "normal_range"
             u["new_test"]["normal_range"] = {}
-            u["range_step"]="male"
-            await context.bot.send_message(chat_id,"أدخل النطاق الطبيعي للذكر (مثال: 13-17 g/dL):")
+            u["range_step"] = "male"
+            await context.bot.send_message(chat_id, "أدخل النطاق الطبيعي للذكر:")
             return
-        elif step=="normal_range":
+
+        elif step == "normal_range":
             u["new_test"]["normal_range"][u["range_step"]] = text
-            next_step = {"male":"female","female":"children","children":"newborn","newborn":"elderly"}
+            next_step = {"male": "female", "female": "children", "children": "newborn", "newborn": "elderly"}
             if u["range_step"] in next_step:
-                u["range_step"]=next_step[u["range_step"]]
-                await context.bot.send_message(chat_id,f"أدخل النطاق الطبيعي لـ {u['range_step']}:")
+                u["range_step"] = next_step[u["range_step"]]
+                await context.bot.send_message(chat_id, f"أدخل النطاق الطبيعي لـ {u['range_step']}:")
                 return
             else:
-                u["adding_step"]="image"
-                await context.bot.send_message(chat_id,"أدخل اسم ملف الصورة أو 'none':")
+                u["adding_step"] = "image"
+                await context.bot.send_message(chat_id, "أدخل اسم ملف الصورة أو 'none':")
                 return
-        elif step=="image":
-            u["new_test"]["image"]=None if text.lower()=="none" else text
-            u["adding_step"]="category"
-            await context.bot.send_message(chat_id,"أدخل التصنيف: CBC / CHEM / HORM")
+
+        elif step == "image":
+            u["new_test"]["image"] = None if text.lower() == "none" else text
+            u["adding_step"] = "category"
+            await context.bot.send_message(chat_id, "أدخل التصنيف: CBC / CHEM / HORM")
             return
-        elif step=="category":
-            if text not in ["CBC","CHEM","HORM"]:
-                await context.bot.send_message(chat_id,"❌ التصنيف غير صحيح.")
+
+        elif step == "category":
+            if text not in ["CBC", "CHEM", "HORM"]:
+                await context.bot.send_message(chat_id, "❌ التصنيف غير صحيح.")
                 return
-            u["new_test"]["category"]=text
+            u["new_test"]["category"] = text
+
             name = u["new_test"]["name"]
-            tests_db[name]={
+            tests_db[name] = {
                 "full_name": u["new_test"]["full_name"],
                 "description": u["new_test"]["description"],
                 "normal_range": u["new_test"]["normal_range"],
@@ -125,10 +138,11 @@ async def handle_message(update, context):
             cat = u["new_test"]["category"]
             if name not in CATEGORIES[cat]["tests"]:
                 CATEGORIES[cat]["tests"].append(name)
+
             save_db(tests_db, TESTS_PATH)
-            u["adding_step"]=None
-            u["new_test"]={}
-            await context.bot.send_message(chat_id,f"✅ تم إضافة التحليل {name} تحت {cat}")
+            u["adding_step"] = None
+            u["new_test"] = {}
+            await context.bot.send_message(chat_id, f"✅ تم إضافة التحليل {name} تحت {cat}")
             return
 
     # ---- عرض تحليل ----
@@ -136,21 +150,24 @@ async def handle_message(update, context):
         test_name = u["awaiting_test"]
         data = tests_db.get(test_name)
         if not data:
-            await context.bot.send_message(chat_id,"❌ لا يوجد هذا التحليل.")
-            u["awaiting_test"]=None
+            await context.bot.send_message(chat_id, "❌ لا يوجد هذا التحليل.")
+            u["awaiting_test"] = None
             return
+
         msg = f"🔹 التحليل: {data['full_name']}\n💡 الوصف: {data['description']}\n📊 النطاق الطبيعي:\n"
-        for k,v in data["normal_range"].items():
-            emoji = {"male":"👨 ذكر","female":"👩 أنثى","children":"🧒 أطفال","newborn":"👶 حديث الولادة","elderly":"👵 كبار السن"}.get(k,k)
-            msg+=f"{emoji}: {v}\n"
+        for k, v in data["normal_range"].items():
+            emoji = {"male": "👨 ذكر", "female": "👩 أنثى", "children": "🧒 أطفال", "newborn": "👶 حديث الولادة", "elderly": "👵 كبار السن"}.get(k, k)
+            msg += f"{emoji}: {v}\n"
+
         if data.get("image"):
             try:
-                await context.bot.send_photo(chat_id, photo=open(data["image"],"rb"), caption=msg)
+                await context.bot.send_photo(chat_id, photo=open(data["image"], "rb"), caption=msg)
             except:
-                await context.bot.send_message(chat_id,msg)
+                await context.bot.send_message(chat_id, msg)
         else:
-            await context.bot.send_message(chat_id,msg)
-        u["awaiting_test"]=None
+            await context.bot.send_message(chat_id, msg)
+
+        u["awaiting_test"] = None
         return
 
 # ========== التعامل مع الأزرار ==========
@@ -160,25 +177,27 @@ async def handle_callback(update, context):
     data = query.data
     u = get_user(chat_id)
 
-    if data=="home":
+    if data == "home":
         await query.answer()
         await query.edit_message_text("اختر التصنيف:", reply_markup=kb_category_root())
         return
+
     if data.startswith("cat:"):
-        _,cat = data.split(":")
+        _, cat = data.split(":")
         await query.answer()
         await query.edit_message_text(f"{CATEGORIES[cat]['title']} — اختر التحليل:", reply_markup=kb_tests_for(cat))
         return
+
     if data.startswith("test:"):
-        _,test = data.split(":")
-        u["awaiting_test"]=test
+        _, test = data.split(":")
+        u["awaiting_test"] = test
         await query.answer()
-        await context.bot.send_message(chat_id,"🔹 التحليل محدد. اضغط /start لإظهار التفاصيل.")
+        await context.bot.send_message(chat_id, "🔹 التحليل محدد. اضغط /start لإظهار التفاصيل.")
         return
 
 # ========== تشغيل البوت ==========
-if __name__=="__main__":
-    BOT_TOKEN = "8402805384:AAG-JnszBhh8GMDIvf1oeKNUvXi07MOXSWo"  #    
+if __name__ == "__main__":
+    BOT_TOKEN = "8402805384:AAG-JnszBhh8GMDIvf1oeKNUvXi07MOXSWo"
     app = ApplicationBuilder().token(BOT_TOKEN).build()
 
     app.add_handler(CommandHandler("start", start))
