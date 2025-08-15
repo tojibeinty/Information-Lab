@@ -15,11 +15,19 @@ tests_db = {
     "هرمونات": {}
 }
 
-# حالة المستخدم أثناء الإضافة أو إدارة الأقسام
+# حفظ حالة المستخدم أثناء الإضافة أو إدارة الأقسام أو البث
 user_states = {}
+
+# حفظ الأعضاء
+members = set()
 
 # ===== دوال البوت =====
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    chat_id = update.message.chat_id if update.message else update.callback_query.message.chat_id
+    # حفظ العضو
+    if chat_id not in members:
+        members.add(chat_id)
+
     welcome_text = (
         "مرحباً بك في بوت التحاليل الطبية.\n"
         "يمكنك هنا استعراض التحاليل الطبية مع النطاق الطبيعي لكل منها.\n\n"
@@ -28,9 +36,12 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     keyboard = [
         [InlineKeyboardButton("التحاليل", callback_data="categories")]
     ]
+    if chat_id == ADMIN_ID:
+        keyboard.append([InlineKeyboardButton("عدد الأعضاء", callback_data="member_count")])
+        keyboard.append([InlineKeyboardButton("إرسال رسالة جماعية", callback_data="broadcast")])
     if update.message:
         await update.message.reply_text(welcome_text, reply_markup=InlineKeyboardMarkup(keyboard))
-    else:  # استدعاء من زر الرجوع
+    else:
         await update.callback_query.edit_message_text(welcome_text, reply_markup=InlineKeyboardMarkup(keyboard))
         await update.callback_query.answer()
 
@@ -42,6 +53,19 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     # زر الرجوع للقائمة الرئيسية
     if data == "start_menu":
         await start(update, context)
+        return
+
+    # عرض عدد الأعضاء
+    elif data == "member_count" and chat_id == ADMIN_ID:
+        await query.answer()
+        await context.bot.send_message(chat_id, f"عدد الأعضاء الحالي: {len(members)}")
+        return
+
+    # إرسال رسالة جماعية
+    elif data == "broadcast" and chat_id == ADMIN_ID:
+        user_states[chat_id] = {"step": "broadcast"}
+        await context.bot.send_message(chat_id, "أرسل الرسالة التي تريد إرسالها لجميع الأعضاء:")
+        await query.answer()
         return
 
     # قائمة الأقسام
@@ -128,10 +152,22 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def add_test_steps(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chat_id = update.message.chat_id
-    if chat_id != ADMIN_ID or chat_id not in user_states:
+    if chat_id not in user_states:
         return
 
     step = user_states[chat_id]["step"]
+
+    # إرسال رسالة جماعية
+    if step == "broadcast":
+        msg = update.message.text
+        for member_id in members:
+            try:
+                await context.bot.send_message(member_id, msg)
+            except:
+                pass
+        await update.message.reply_text("تم إرسال الرسالة لجميع الأعضاء.")
+        del user_states[chat_id]
+        return
 
     # خطوات إضافة التحليل
     if step == "name":
