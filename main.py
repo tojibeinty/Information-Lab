@@ -2,7 +2,6 @@ from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Application, CommandHandler, CallbackQueryHandler, MessageHandler, filters, ContextTypes
 import json
 import os
-import re
 
 # ===== إعدادات البوت =====
 BOT_TOKEN = "8402805384:AAFkyqNHUbDz5DDbBXoZOgv4Ve81Nd510vk"
@@ -118,6 +117,7 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
             return
         test_names = list(tests_db[category].keys())
         keyboard = build_buttons_list(test_names, category)
+        # زر رجوع للقسم الرئيسي
         keyboard.append([InlineKeyboardButton("رجوع", callback_data="categories")])
         await query.edit_message_text(f"قسم: {category}", reply_markup=InlineKeyboardMarkup(keyboard))
         await query.answer()
@@ -128,21 +128,17 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         if not test_data:
             await query.answer("لا يوجد هذا التحليل.")
             return
+
+        # رسالة التحليل
         msg = f"التحليل: {test_data['full_name']}\nالوصف: {test_data['description']}\n\nالنطاق الطبيعي:\n"
         labels = {"male": "ذكر", "female": "أنثى", "children": "أطفال", "newborn": "حديث الولادة", "elderly": "كبار السن"}
         for k, v in test_data["normal_range"].items():
             msg += f"{labels[k]}: {v}\n"
-        await context.bot.send_message(chat_id, msg)
-        await query.answer()
 
-    elif data.startswith("delete:") and chat_id == ADMIN_ID:
-        _, category, test_name = data.split(":")
-        if test_name in tests_db.get(category, {}):
-            del tests_db[category][test_name]
-            save_tests_db()
-            await query.edit_message_text(f"تم حذف التحليل: {test_name}")
-        else:
-            await query.answer("التحليل غير موجود.")
+        # زر للرجوع للقسم
+        keyboard = [[InlineKeyboardButton("رجوع للقسم", callback_data=f"category:{category}")]]
+        await context.bot.send_message(chat_id, msg, reply_markup=InlineKeyboardMarkup(keyboard))
+        await query.answer()
 
 # ===== التعامل مع الرسائل النصية =====
 async def handle_messages(update: Update, context: ContextTypes.DEFAULT_TYPE):
