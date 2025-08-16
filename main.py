@@ -42,12 +42,12 @@ def save_tests_db():
 user_states = {}
 
 # ===== دوال مساعدة =====
-def build_buttons_list(items, category):
-    """إنشاء أزرار InlineKeyboardButton بصفين لكل صف زرين"""
+def build_buttons_list(items, prefix):
+    """إنشاء أزرار بصفين لكل صف"""
     keyboard = []
     row = []
     for i, item in enumerate(items, 1):
-        row.append(InlineKeyboardButton(item, callback_data=f"test:{category}:{item}"))
+        row.append(InlineKeyboardButton(item, callback_data=f"{prefix}:{item}"))
         if i % 2 == 0:
             keyboard.append(row)
             row = []
@@ -78,7 +78,6 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.callback_query.edit_message_text(welcome_text, reply_markup=InlineKeyboardMarkup(keyboard))
         await update.callback_query.answer()
 
-# ===== التعامل مع الأزرار =====
 async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     data = query.data
@@ -100,11 +99,14 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     elif data == "categories":
-        keyboard = [[InlineKeyboardButton(cat, callback_data=f"category:{cat}")] for cat in tests_db.keys()]
+        categories = list(tests_db.keys())
+        keyboard = build_buttons_list(categories, "category")
+        # أزرار المسؤول
         if chat_id == ADMIN_ID:
             keyboard.append([InlineKeyboardButton("إضافة تحليل", callback_data="add_test")])
             keyboard.append([InlineKeyboardButton("إضافة قسم", callback_data="add_category")])
             keyboard.append([InlineKeyboardButton("حذف قسم", callback_data="delete_category")])
+        # زر الرجوع للبداية
         keyboard.append([InlineKeyboardButton("رجوع", callback_data="start_menu")])
         await query.edit_message_text("اختر القسم:", reply_markup=InlineKeyboardMarkup(keyboard))
         await query.answer()
@@ -116,8 +118,7 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await query.answer("القسم غير موجود.")
             return
         test_names = list(tests_db[category].keys())
-        keyboard = build_buttons_list(test_names, category)
-        # زر رجوع للقسم الرئيسي
+        keyboard = build_buttons_list(test_names, f"test:{category}")
         keyboard.append([InlineKeyboardButton("رجوع", callback_data="categories")])
         await query.edit_message_text(f"قسم: {category}", reply_markup=InlineKeyboardMarkup(keyboard))
         await query.answer()
@@ -126,45 +127,4 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         _, category, test_name = data.split(":")
         test_data = tests_db.get(category, {}).get(test_name)
         if not test_data:
-            await query.answer("لا يوجد هذا التحليل.")
-            return
-
-        # رسالة التحليل
-        msg = f"التحليل: {test_data['full_name']}\nالوصف: {test_data['description']}\n\nالنطاق الطبيعي:\n"
-        labels = {"male": "ذكر", "female": "أنثى", "children": "أطفال", "newborn": "حديث الولادة", "elderly": "كبار السن"}
-        for k, v in test_data["normal_range"].items():
-            msg += f"{labels[k]}: {v}\n"
-
-        # زر للرجوع للقسم
-        keyboard = [[InlineKeyboardButton("رجوع للقسم", callback_data=f"category:{category}")]]
-        await context.bot.send_message(chat_id, msg, reply_markup=InlineKeyboardMarkup(keyboard))
-        await query.answer()
-
-# ===== التعامل مع الرسائل النصية =====
-async def handle_messages(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    chat_id = update.message.chat_id
-    if chat_id not in user_states:
-        return
-
-    step = user_states[chat_id]["step"]
-
-    if step == "broadcast":
-        msg = update.message.text
-        for member_id in members:
-            try:
-                await context.bot.send_message(member_id, msg)
-            except:
-                pass
-        await update.message.reply_text("تم إرسال الرسالة لجميع الأعضاء.")
-        del user_states[chat_id]
-
-# ===== تشغيل البوت =====
-def main():
-    app = Application.builder().token(BOT_TOKEN).build()
-    app.add_handler(CommandHandler("start", start))
-    app.add_handler(CallbackQueryHandler(handle_callback))
-    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_messages))
-    app.run_polling()
-
-if __name__ == "__main__":
-    main()
+            await query.answer("لا يوجد
