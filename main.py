@@ -4,7 +4,7 @@ import json
 import os
 
 # ===== إعدادات البوت =====
-BOT_TOKEN = "8402805384:AAG-JnszBhh8GMDIvf1oeKNUvXi07MOXSWo"
+BOT_TOKEN = "8402805384:AAFkyqNHUbDz5DDbBXoZOgv4Ve81Nd510vk"
 ADMIN_ID = 6263195701
 INSTAGRAM_LINK = "https://instagram.com/tojibeinty"
 
