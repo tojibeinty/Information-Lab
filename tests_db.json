@@ -1,67 +1,66 @@
-# قاعدة بيانات التحاليل مع وصف ونطاق طبيعي تقريبي
-tests_db = {
-    "كيميا": {
-        "urea": {"full_name": "Urea", "description": "تحليل اليوريا", "normal_range": {"male":"2.5-7.1", "female":"2.5-7.1","children":"2.5-7.1","newborn":"1.8-6.4","elderly":"2.5-7.1"}},
-        "creatinine": {"full_name": "Creatinine", "description": "تحليل الكرياتينين", "normal_range": {"male":"0.7-1.3","female":"0.6-1.1","children":"0.3-0.7","newborn":"0.2-0.8","elderly":"0.7-1.3"}},
-        "uric": {"full_name": "Uric Acid", "description": "تحليل حمض اليوريك", "normal_range": {"male":"3.4-7.0","female":"2.4-6.0","children":"2.0-5.5","newborn":"1.0-4.0","elderly":"3.4-7.0"}},
-        "tri": {"full_name": "Triglycerides", "description": "تحليل ثلاثي الغليسريد", "normal_range": {"male":"0.45-1.69","female":"0.45-1.69","children":"0.45-1.69","newborn":"0.1-1.1","elderly":"0.45-1.69"}},
-        "cho": {"full_name": "Cholesterol", "description": "تحليل الكوليسترول", "normal_range": {"male":"125-200","female":"125-200","children":"125-200","newborn":"70-150","elderly":"125-200"}},
-        "hdl": {"full_name": "HDL", "description": "تحليل الكوليسترول الجيد HDL", "normal_range": {"male":"40-60","female":"50-60","children":"40-60","newborn":"35-50","elderly":"40-60"}},
-        "ldl": {"full_name": "LDL", "description": "تحليل الكوليسترول الضار LDL", "normal_range": {"male":"0-130","female":"0-130","children":"0-130","newborn":"0-100","elderly":"0-130"}},
-        "vldl": {"full_name": "VLDL", "description": "تحليل VLDL", "normal_range": {"male":"5-40","female":"5-40","children":"5-40","newborn":"5-40","elderly":"5-40"}},
-        "rbs": {"full_name": "RBS", "description": "سكر عشوائي", "normal_range": {"male":"70-140","female":"70-140","children":"70-140","newborn":"50-120","elderly":"70-140"}},
-        "fbs": {"full_name": "FBS", "description": "سكر صائم", "normal_range": {"male":"70-100","female":"70-100","children":"70-100","newborn":"50-90","elderly":"70-100"}},
-        "got": {"full_name": "GOT/AST", "description": "إنزيم AST", "normal_range": {"male":"10-40","female":"10-35","children":"10-40","newborn":"5-50","elderly":"10-40"}},
-        "gpt": {"full_name": "GPT/ALT", "description": "إنزيم ALT", "normal_range": {"male":"10-40","female":"7-35","children":"10-40","newborn":"5-50","elderly":"10-40"}},
-        "alp": {"full_name": "ALP", "description": "إنزيم ALP", "normal_range": {"male":"40-129","female":"35-104","children":"104-345","newborn":"150-420","elderly":"40-129"}},
-        "protein": {"full_name": "Protein", "description": "تحليل البروتين الكلي", "normal_range": {"male":"6.4-8.3","female":"6.4-8.3","children":"6.4-8.3","newborn":"5.5-7.0","elderly":"6.4-8.3"}},
-        "albumin": {"full_name": "Albumin", "description": "تحليل الألبومين", "normal_range": {"male":"3.5-5.0","female":"3.5-5.0","children":"3.5-5.0","newborn":"2.8-4.4","elderly":"3.5-5.0"}},
-        "zinc": {"full_name": "Zinc", "description": "تحليل الزنك", "normal_range": {"male":"70-120","female":"70-120","children":"70-120","newborn":"50-120","elderly":"70-120"}},
-        "iron": {"full_name": "Iron", "description": "تحليل الحديد", "normal_range": {"male":"65-175","female":"50-170","children":"50-120","newborn":"100-250","elderly":"65-175"}},
-        "mg+": {"full_name": "Magnesium", "description": "تحليل المغنيسيوم", "normal_range": {"male":"1.7-2.2","female":"1.7-2.2","children":"1.6-2.3","newborn":"1.6-2.3","elderly":"1.7-2.2"}},
-        "k+": {"full_name": "Potassium", "description": "تحليل البوتاسيوم", "normal_range": {"male":"3.5-5.0","female":"3.5-5.0","children":"3.5-5.0","newborn":"3.2-5.0","elderly":"3.5-5.0"}},
-        "ca+": {"full_name": "Calcium", "description": "تحليل الكالسيوم", "normal_range": {"male":"8.6-10.3","female":"8.6-10.3","children":"8.8-10.8","newborn":"7.0-12.0","elderly":"8.6-10.3"}},
-        "po4+": {"full_name": "Phosphate", "description": "تحليل الفوسفات", "normal_range": {"male":"2.5-4.5","female":"2.5-4.5","children":"4.0-7.0","newborn":"4.5-9.0","elderly":"2.5-4.5"}},
-        "na+": {"full_name": "Sodium", "description": "تحليل الصوديوم", "normal_range": {"male":"135-145","female":"135-145","children":"135-145","newborn":"135-145","elderly":"135-145"}}
-    },
-    "هرمونات": {
-        "FSH":{"full_name":"FSH","description":"تحليل هرمون FSH","normal_range":{"male":"1.5-12.4","female":"3.5-12.5","children":"0-4","newborn":"0-0.3","elderly":"1.5-12.4"}},
-        "LH":{"full_name":"LH","description":"تحليل هرمون LH","normal_range":{"male":"1.7-8.6","female":"2-14","children":"0-0.1","newborn":"0-0.2","elderly":"1.7-8.6"}},
-        "PRL":{"full_name":"Prolactin","description":"تحليل هرمون البرولاكتين","normal_range":{"male":"2-18","female":"3-30","children":"0-5","newborn":"0-5","elderly":"2-18"}},
-        "TSH":{"full_name":"TSH","description":"تحليل هرمون TSH","normal_range":{"male":"0.4-4.0","female":"0.4-4.0","children":"0.7-6.4","newborn":"1-39","elderly":"0.4-4.0"}},
-        "T4":{"full_name":"T4","description":"تحليل هرمون T4","normal_range":{"male":"4.5-12.0","female":"4.5-12.0","children":"4-12","newborn":"6-16","elderly":"4.5-12.0"}},
-        "T3":{"full_name":"T3","description":"تحليل هرمون T3","normal_range":{"male":"0.8-2.0","female":"0.8-2.0","children":"0.7-2.2","newborn":"0.8-2.2","elderly":"0.8-2.0"}},
-        "FREE T3":{"full_name":"Free T3","description":"تحليل هرمون Free T3","normal_range":{"male":"2.3-4.2","female":"2.3-4.2","children":"2-4.2","newborn":"2-4.2","elderly":"2.3-4.2"}},
-        "FREE T4":{"full_name":"Free T4","description":"تحليل هرمون Free T4","normal_range":{"male":"0.8-1.8","female":"0.8-1.8","children":"0.7-1.8","newborn":"0.8-2.0","elderly":"0.8-1.8"}},
-        "D3":{"full_name":"Vitamin D3","description":"تحليل فيتامين D3","normal_range":{"male":"30-100","female":"30-100","children":"30-100","newborn":"20-50","elderly":"30-100"}},
-        "B12":{"full_name":"Vitamin B12","description":"تحليل فيتامين B12","normal_range":{"male":"200-900","female":"200-900","children":"200-900","newborn":"150-500","elderly":"200-900"}},
-        "FERRITINE":{"full_name":"Ferritin","description":"تحليل الفيريتين","normal_range":{"male":"20-250","female":"10-120","children":"7-140","newborn":"25-200","elderly":"20-250"}},
-        "PROGESTERONE":{"full_name":"Progesterone","description":"تحليل البروجسترون","normal_range":{"male":"0-1","female":"1-28","children":"0-1","newborn":"0-1","elderly":"0-1"}},
-        "TESTESTERONE":{"full_name":"Testosterone","description":"تحليل التستوستيرون","normal_range":{"male":"300-1000","female":"15-70","children":"0-20","newborn":"0-10","elderly":"300-1000"}},
-        "AMH":{"full_name":"AMH","description":"تحليل AMH","normal_range":{"male":"0-8","female":"0.7-10","children":"0-0.5","newborn":"0-0.5","elderly":"0-8"}},
-        "INSULLIN":{"full_name":"Insulin","description":"تحليل الانسولين","normal_range":{"male":"2-25","female":"2-25","children":"2-25","newborn":"2-25","elderly":"2-25"}},
-        "HBA1C":{"full_name":"HbA1c","description":"تحليل HbA1c","normal_range":{"male":"4-5.6","female":"4-5.6","children":"4-5.6","newborn":"4-5.6","elderly":"4-5.6"}},
-        "BETAHCG":{"full_name":"Beta HCG","description":"تحليل Beta HCG","normal_range":{"male":"0","female":"<5","children":"0","newborn":"0","elderly":"0"}}
-    },
-    "دم": {
-        "cbc":{"full_name":"CBC","description":"صورة دم كاملة","normal_range":{"male":"4.7-6.1","female":"4.2-5.4","children":"4.1-5.5","newborn":"4.8-7.1","elderly":"4.7-6.1"}},
-        "pcv":{"full_name":"PCV","description":"حجم كريات الدم الحمراء","normal_range":{"male":"40-52%","female":"36-48%","children":"36-40%","newborn":"42-65%","elderly":"40-52%"}},
-        "hb":{"full_name":"Hb","description":"الهيموغلوبين","normal_range":{"male":"13-17","female":"12-16","children":"11-14","newborn":"14-20","elderly":"13-17"}},
-        "blood group":{"full_name":"Blood Group","description":"فصيلة الدم","normal_range":{"male":"A/B/O/AB","female":"A/B/O/AB","children":"A/B/O/AB","newborn":"A/B/O/AB","elderly":"A/B/O/AB"}}
-    },
-    "مناعية": {
-        "crp":{"full_name":"CRP","description":"تحليل C-Reactive Protein","normal_range":{"male":"0-5","female":"0-5","children":"0-5","newborn":"0-5","elderly":"0-5"}},
-        "esr":{"full_name":"ESR","description":"تحليل ESR","normal_range":{"male":"0-15","female":"0-20","children":"0-10","newborn":"0-2","elderly":"0-20"}},
-        "aso":{"full_name":"ASO","description":"تحليل ASO","normal_range":{"male":"<200","female":"<200","children":"<200","newborn":"<200","elderly":"<200"}},
-        "rose bengel":{"full_name":"Rose Bengal","description":"تحليل Rose Bengal","normal_range":{"male":"Negative","female":"Negative","children":"Negative","newborn":"Negative","elderly":"Negative"}},
-        "rf":{"full_name":"RF","description":"تحليل RF","normal_range":{"male":"<14","female":"<14","children":"<14","newborn":"<14","elderly":"<14"}}
-    },
-    "تخثر": {
-        "pt":{"full_name":"PT","description":"تحليل PT","normal_range":{"male":"11-13.5","female":"11-13.5","children":"11-13.5","newborn":"11-13.5","elderly":"11-13.5"}},
-        "ptt":{"full_name":"PTT","description":"تحليل PTT","normal_range":{"male":"25-35","female":"25-35","children":"25-35","newborn":"25-35","elderly":"25-35"}},
-        "inr":{"full_name":"INR","description":"تحليل INR","normal_range":{"male":"0.8-1.2","female":"0.8-1.2","children":"0.8-1.2","newborn":"0.8-1.2","elderly":"0.8-1.2"}},
-        "lupus":{"full_name":"Lupus","description":"تحليل Lupus","normal_range":{"male":"Negative","female":"Negative","children":"Negative","newborn":"Negative","elderly":"Negative"}},
-        "d-dimer":{"full_name":"D-Dimer","description":"تحليل D-Dimer","normal_range":{"male":"0-0.5","female":"0-0.5","children":"0-0.5","newborn":"0-0.5","elderly":"0-0.5"}},
-        "fibrogen":{"full_name":"Fibrinogen","description":"تحليل Fibrogen","normal_range":{"male":"200-400","female":"200-400","children":"200-400","newborn":"200-400","elderly":"200-400"}}
-    }
+{
+  "كيميا": {
+    "urea": {"full_name": "Urea", "description": "تحليل اليوريا", "normal_range":{"male":"2.5-7.1","female":"2.5-7.1","children":"2.5-7.1","newborn":"1.8-6.4","elderly":"2.5-7.1"}},
+    "creatinine": {"full_name": "Creatinine", "description": "تحليل الكرياتينين", "normal_range":{"male":"0.7-1.3","female":"0.6-1.1","children":"0.3-0.7","newborn":"0.2-0.8","elderly":"0.7-1.3"}},
+    "uric": {"full_name": "Uric Acid", "description": "تحليل حمض اليوريك", "normal_range":{"male":"3.4-7.0","female":"2.4-6.0","children":"2.0-5.5","newborn":"1.0-4.0","elderly":"3.4-7.0"}},
+    "tri": {"full_name": "Triglycerides", "description": "تحليل ثلاثي الغليسريد", "normal_range":{"male":"0.45-1.69","female":"0.45-1.69","children":"0.45-1.69","newborn":"0.1-1.1","elderly":"0.45-1.69"}},
+    "cho": {"full_name": "Cholesterol", "description": "تحليل الكوليسترول الكلي", "normal_range":{"male":"125-200","female":"125-200","children":"125-200","newborn":"70-150","elderly":"125-200"}},
+    "hdl": {"full_name": "HDL", "description": "تحليل الكوليسترول الجيد", "normal_range":{"male":"40-60","female":"50-60","children":"40-60","newborn":"35-50","elderly":"40-60"}},
+    "ldl": {"full_name": "LDL", "description": "تحليل الكوليسترول الضار", "normal_range":{"male":"0-130","female":"0-130","children":"0-130","newborn":"0-100","elderly":"0-130"}},
+    "vldl": {"full_name": "VLDL", "description": "تحليل البروتين الدهني جداً منخفض الكثافة", "normal_range":{"male":"5-40","female":"5-40","children":"5-40","newborn":"5-40","elderly":"5-40"}},
+    "rbs": {"full_name": "RBS", "description": "سكر عشوائي", "normal_range":{"male":"70-140","female":"70-140","children":"70-140","newborn":"50-120","elderly":"70-140"}},
+    "fbs": {"full_name": "FBS", "description": "سكر صائم", "normal_range":{"male":"70-100","female":"70-100","children":"70-100","newborn":"50-90","elderly":"70-100"}},
+    "got": {"full_name": "AST / GOT", "description": "إنزيم AST", "normal_range":{"male":"10-40","female":"10-35","children":"10-40","newborn":"5-50","elderly":"10-40"}},
+    "gpt": {"full_name": "ALT / GPT", "description": "إنزيم ALT", "normal_range":{"male":"10-40","female":"7-35","children":"10-40","newborn":"5-50","elderly":"10-40"}},
+    "alp": {"full_name": "ALP", "description": "إنزيم ALP", "normal_range":{"male":"40-129","female":"35-104","children":"104-345","newborn":"150-420","elderly":"40-129"}},
+    "protein": {"full_name": "Protein", "description": "تحليل البروتين الكلي", "normal_range":{"male":"6.4-8.3","female":"6.4-8.3","children":"6.4-8.3","newborn":"5.5-7.0","elderly":"6.4-8.3"}},
+    "albumin": {"full_name": "Albumin", "description": "تحليل الألبومين", "normal_range":{"male":"3.5-5.0","female":"3.5-5.0","children":"3.5-5.0","newborn":"2.8-4.4","elderly":"3.5-5.0"}},
+    "zinc": {"full_name": "Zinc", "description": "تحليل الزنك", "normal_range":{"male":"70-120","female":"70-120","children":"70-120","newborn":"50-120","elderly":"70-120"}},
+    "iron": {"full_name": "Iron", "description": "تحليل الحديد", "normal_range":{"male":"65-175","female":"50-170","children":"50-120","newborn":"100-250","elderly":"65-175"}},
+    "mg": {"full_name": "Magnesium", "description": "تحليل المغنيسيوم", "normal_range":{"male":"1.7-2.2","female":"1.7-2.2","children":"1.6-2.3","newborn":"1.6-2.3","elderly":"1.7-2.2"}},
+    "k": {"full_name": "Potassium", "description": "تحليل البوتاسيوم", "normal_range":{"male":"3.5-5.0","female":"3.5-5.0","children":"3.5-5.0","newborn":"3.2-5.0","elderly":"3.5-5.0"}},
+    "ca": {"full_name": "Calcium", "description": "تحليل الكالسيوم", "normal_range":{"male":"8.6-10.3","female":"8.6-10.3","children":"8.8-10.8","newborn":"7.0-12.0","elderly":"8.6-10.3"}},
+    "po4": {"full_name": "Phosphate", "description": "تحليل الفوسفات", "normal_range":{"male":"2.5-4.5","female":"2.5-4.5","children":"4.0-7.0","newborn":"4.5-9.0","elderly":"2.5-4.5"}},
+    "na": {"full_name": "Sodium", "description": "تحليل الصوديوم", "normal_range":{"male":"135-145","female":"135-145","children":"135-145","newborn":"135-145","elderly":"135-145"}}
+  },
+  "هرمونات": {
+    "FSH":{"full_name":"FSH","description":"تحليل هرمون FSH","normal_range":{"male":"1.5-12.4","female":"3.5-12.5","children":"0-4","newborn":"0-0.3","elderly":"1.5-12.4"}},
+    "LH":{"full_name":"LH","description":"تحليل هرمون LH","normal_range":{"male":"1.7-8.6","female":"2-14","children":"0-0.1","newborn":"0-0.2","elderly":"1.7-8.6"}},
+    "PRL":{"full_name":"Prolactin","description":"تحليل هرمون البرولاكتين","normal_range":{"male":"2-18","female":"3-30","children":"0-5","newborn":"0-5","elderly":"2-18"}},
+    "TSH":{"full_name":"TSH","description":"تحليل هرمون TSH","normal_range":{"male":"0.4-4.0","female":"0.4-4.0","children":"0.7-6.4","newborn":"1-39","elderly":"0.4-4.0"}},
+    "T4":{"full_name":"T4","description":"تحليل هرمون T4","normal_range":{"male":"4.5-12.0","female":"4.5-12.0","children":"4-12","newborn":"6-16","elderly":"4.5-12.0"}},
+    "T3":{"full_name":"T3","description":"تحليل هرمون T3","normal_range":{"male":"0.8-2.0","female":"0.8-2.0","children":"0.7-2.2","newborn":"0.8-2.2","elderly":"0.8-2.0"}},
+    "FREE T3":{"full_name":"Free T3","description":"تحليل هرمون Free T3","normal_range":{"male":"2.3-4.2","female":"2.3-4.2","children":"2-4.2","newborn":"2-4.2","elderly":"2.3-4.2"}},
+    "FREE T4":{"full_name":"Free T4","description":"تحليل هرمون Free T4","normal_range":{"male":"0.8-1.8","female":"0.8-1.8","children":"0.7-1.8","newborn":"0.8-2.0","elderly":"0.8-1.8"}},
+    "D3":{"full_name":"Vitamin D3","description":"تحليل فيتامين D3","normal_range":{"male":"30-100","female":"30-100","children":"30-100","newborn":"20-50","elderly":"30-100"}},
+    "B12":{"full_name":"Vitamin B12","description":"تحليل فيتامين B12","normal_range":{"male":"200-900","female":"200-900","children":"200-900","newborn":"150-500","elderly":"200-900"}},
+    "FERRITINE":{"full_name":"Ferritin","description":"تحليل الفيريتين","normal_range":{"male":"20-250","female":"10-120","children":"7-140","newborn":"25-200","elderly":"20-250"}},
+    "PROGESTERONE":{"full_name":"Progesterone","description":"تحليل البروجسترون","normal_range":{"male":"0-1","female":"1-28","children":"0-1","newborn":"0-1","elderly":"0-1"}},
+    "TESTOSTERONE":{"full_name":"Testosterone","description":"تحليل التستوستيرون","normal_range":{"male":"300-1000","female":"15-70","children":"0-20","newborn":"0-10","elderly":"300-1000"}},
+    "AMH":{"full_name":"AMH","description":"تحليل AMH","normal_range":{"male":"0-8","female":"0.7-10","children":"0-0.5","newborn":"0-0.5","elderly":"0-8"}},
+    "INSULIN":{"full_name":"Insulin","description":"تحليل الانسولين","normal_range":{"male":"2-25","female":"2-25","children":"2-25","newborn":"2-25","elderly":"2-25"}},
+    "HBA1C":{"full_name":"HbA1c","description":"تحليل HbA1c","normal_range":{"male":"4-5.6","female":"4-5.6","children":"4-5.6","newborn":"4-5.6","elderly":"4-5.6"}},
+    "BETAHCG":{"full_name":"Beta HCG","description":"تحليل Beta HCG","normal_range":{"male":"0","female":"<5","children":"0","newborn":"0","elderly":"0"}}
+  },
+  "دم": {
+    "cbc":{"full_name":"CBC","description":"صورة دم كاملة","normal_range":{"male":"4.7-6.1","female":"4.2-5.4","children":"4.1-5.5","newborn":"4.8-7.1","elderly":"4.7-6.1"}},
+    "pcv":{"full_name":"PCV","description":"حجم كريات الدم الحمراء","normal_range":{"male":"40-52%","female":"36-48%","children":"36-40%","newborn":"42-65%","elderly":"40-52%"}},
+    "hb":{"full_name":"Hb","description":"الهيموغلوبين","normal_range":{"male":"13-17","female":"12-16","children":"11-14","newborn":"14-20","elderly":"13-17"}},
+    "blood group":{"full_name":"Blood Group","description":"فصيلة الدم","normal_range":{"male":"A/B/O/AB","female":"A/B/O/AB","children":"A/B/O/AB","newborn":"A/B/O/AB","elderly":"A/B/O/AB"}}
+  },
+  "مناعية": {
+    "crp":{"full_name":"CRP","description":"تحليل C-Reactive Protein","normal_range":{"male":"0-5","female":"0-5","children":"0-5","newborn":"0-5","elderly":"0-5"}},
+    "esr":{"full_name":"ESR","description":"تحليل ESR","normal_range":{"male":"0-15","female":"0-20","children":"0-10","newborn":"0-2","elderly":"0-20"}},
+    "aso":{"full_name":"ASO","description":"تحليل ASO","normal_range":{"male":"<200","female":"<200","children":"<200","newborn":"<200","elderly":"<200"}},
+    "rose bengal":{"full_name":"Rose Bengal","description":"تحليل Rose Bengal","normal_range":{"male":"Negative","female":"Negative","children":"Negative","newborn":"Negative","elderly":"Negative"}},
+    "rf":{"full_name":"RF","description":"تحليل RF","normal_range":{"male":"<14","female":"<14","children":"<14","newborn":"<14","elderly":"<14"}}
+  },
+  "تخثر": {
+    "pt":{"full_name":"PT","description":"تحليل PT","normal_range":{"male":"11-13.5","female":"11-13.5","children":"11-13.5","newborn":"11-13.5","elderly":"11-13.5"}},
+    "ptt":{"full_name":"PTT","description":"تحليل PTT","normal_range":{"male":"25-35","female":"25-35","children":"25-35","newborn":"25-35","elderly":"25-35"}},
+    "inr":{"full_name":"INR","description":"تحليل INR","normal_range":{"male":"0.8-1.2","female":"0.8-1.2","children":"0.8-1.2","newborn":"0.8-1.2","elderly":"0.8-1.2"}},
+    "lupus":{"full_name":"Lupus","description":"تحليل Lupus","normal_range":{"male":"Negative","female":"Negative","children":"Negative","newborn":"Negative","elderly":"Negative"}},
+    "d-dimer":{"full_name":"D-Dimer","description":"تحليل D-Dimer","normal_range":{"male":"0-0.5","female":"0-0.5","children":"0-0.5","newborn":"0-0.5","elderly":"0-0.5"}},
+    "fibrinogen":{"full_name":"Fibrinogen","description":"تحليل Fibrinogen","normal_range":{"male":"200-400","female":"200-400","children":"200-400","newborn":"200-400","elderly":"200-400"}}
+  }
 }
