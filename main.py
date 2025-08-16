@@ -14,19 +14,17 @@ USERS_FILE = "members.json"
 TESTS_FILE = "tests_db.json"
 
 # ===== تحميل البيانات =====
-# المستخدمين
 if os.path.exists(USERS_FILE):
     with open(USERS_FILE, "r", encoding="utf-8") as f:
         members = set(json.load(f))
 else:
     members = set()
 
-# التحاليل
 if os.path.exists(TESTS_FILE):
     with open(TESTS_FILE, "r", encoding="utf-8") as f:
         tests_db = json.load(f)
 else:
-    tests_db = {}
+    tests_db = {}  # إذا الملف فارغ، ضع القيم الافتراضية كما تريد
 
 # ===== حفظ البيانات =====
 def save_members():
@@ -112,10 +110,9 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         if not test_data:
             await query.answer("لا يوجد هذا التحليل.")
             return
-        msg = f"التحليل: {test_data['full_name']}\nالوصف: {test_data['description']}\n\nالنطاق الطبيعي:\n"
         labels = {"male": "ذكر", "female": "أنثى", "children": "أطفال", "newborn": "حديث الولادة", "elderly": "كبار السن"}
-        for k, v in test_data["normal_range"].items():
-            msg += f"{labels[k]}: {v}\n"
+        ranges = [f"{labels[k]}: {v}" for k, v in test_data["normal_range"].items()]
+        msg = f"{test_data['full_name']} | {test_data['description']} | " + " | ".join(ranges)
         await context.bot.send_message(chat_id, msg)
         await query.answer()
 
