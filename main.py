@@ -110,7 +110,11 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         if not test_data:
             await query.answer("لا يوجد هذا التحليل.")
             return
-        labels = {"male": "ذكر", "female": "أنثى", "children": "أطفال", "newborn": "حديث الولادة", "elderly": "كبار السن"}
+        labels = {"male": "ذكر",
+                  "female": "أنثى",
+                  "children": "أطفال",
+                  "newborn": "حديث الولادة",
+                  "elderly": "كبار السن"}
         ranges = [f"{labels[k]}: {v}" for k, v in test_data["normal_range"].items()]
         msg = f"{test_data['full_name']} | {test_data['description']} | " + " | ".join(ranges)
         await context.bot.send_message(chat_id, msg)
