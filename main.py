@@ -42,13 +42,13 @@ def save_tests_db():
 user_states = {}
 
 # ===== دوال مساعدة =====
-def build_buttons_list(items, prefix):
-    """إنشاء أزرار بصفين لكل صف"""
+def build_buttons_list(items, prefix, columns=2):
+    """إنشاء أزرار InlineKeyboardButton بعدد أعمدة محدد لكل صف"""
     keyboard = []
     row = []
     for i, item in enumerate(items, 1):
         row.append(InlineKeyboardButton(item, callback_data=f"{prefix}:{item}"))
-        if i % 2 == 0:
+        if i % columns == 0:
             keyboard.append(row)
             row = []
     if row:
@@ -100,68 +100,7 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     elif data == "categories":
         categories = list(tests_db.keys())
-        keyboard = build_buttons_list(categories, "category")
+        keyboard = build_buttons_list(categories, "category", columns=3)  # 3 أعمدة للأقسام
         if chat_id == ADMIN_ID:
             keyboard.append([InlineKeyboardButton("إضافة تحليل", callback_data="add_test")])
-            keyboard.append([InlineKeyboardButton("إضافة قسم", callback_data="add_category")])
-            keyboard.append([InlineKeyboardButton("حذف قسم", callback_data="delete_category")])
-        keyboard.append([InlineKeyboardButton("رجوع", callback_data="start_menu")])
-        await query.edit_message_text("اختر القسم:", reply_markup=InlineKeyboardMarkup(keyboard))
-        await query.answer()
-
-    elif data.startswith("category:"):
-        _, category = data.split(":")
-        category = category.strip()
-        if category not in tests_db:
-            await query.answer("القسم غير موجود.")
-            return
-        test_names = list(tests_db[category].keys())
-        keyboard = build_buttons_list(test_names, f"test:{category}")
-        keyboard.append([InlineKeyboardButton("رجوع", callback_data="categories")])
-        await query.edit_message_text(f"قسم: {category}", reply_markup=InlineKeyboardMarkup(keyboard))
-        await query.answer()
-
-    elif data.startswith("test:"):
-        _, category, test_name = data.split(":")
-        test_data = tests_db.get(category, {}).get(test_name)
-        if not test_data:
-            await query.answer("لا يوجد هذا التحليل.")
-            return
-
-        msg = f"التحليل: {test_data['full_name']}\nالوصف: {test_data['description']}\n\nالنطاق الطبيعي:\n"
-        labels = {"male": "ذكر", "female": "أنثى", "children": "أطفال", "newborn": "حديث الولادة", "elderly": "كبار السن"}
-        for k, v in test_data["normal_range"].items():
-            msg += f"{labels[k]}: {v}\n"
-
-        # زر الرجوع للقسم
-        keyboard = [[InlineKeyboardButton("رجوع للقسم", callback_data=f"category:{category}")]]
-        await query.edit_message_text(msg, reply_markup=InlineKeyboardMarkup(keyboard))
-        await query.answer()
-
-# ===== التعامل مع الرسائل النصية =====
-async def handle_messages(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    chat_id = update.message.chat_id
-    if chat_id not in user_states:
-        return
-
-    step = user_states[chat_id]["step"]
-    if step == "broadcast":
-        msg = update.message.text
-        for member_id in members:
-            try:
-                await context.bot.send_message(member_id, msg)
-            except:
-                pass
-        await update.message.reply_text("تم إرسال الرسالة لجميع الأعضاء.")
-        del user_states[chat_id]
-
-# ===== تشغيل البوت =====
-def main():
-    app = Application.builder().token(BOT_TOKEN).build()
-    app.add_handler(CommandHandler("start", start))
-    app.add_handler(CallbackQueryHandler(handle_callback))
-    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_messages))
-    app.run_polling()
-
-if __name__ == "__main__":
-    main()
+            keyboard.append(
