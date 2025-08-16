@@ -2,7 +2,6 @@ from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Application, CommandHandler, CallbackQueryHandler, MessageHandler, filters, ContextTypes
 import json
 import os
-import re
 
 # ===== إعدادات البوت =====
 BOT_TOKEN = "8402805384:AAG-JnszBhh8GMDIvf1oeKNUvXi07MOXSWo"
@@ -24,7 +23,7 @@ if os.path.exists(TESTS_FILE):
     with open(TESTS_FILE, "r", encoding="utf-8") as f:
         tests_db = json.load(f)
 else:
-    tests_db = {}  # إذا الملف فارغ، ضع القيم الافتراضية كما تريد
+    tests_db = {}
 
 # ===== حفظ البيانات =====
 def save_members():
@@ -61,6 +60,20 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.callback_query.edit_message_text(welcome_text, reply_markup=InlineKeyboardMarkup(keyboard))
         await update.callback_query.answer()
 
+# ===== تنظيم الأزرار في صفوف من حقلين =====
+def build_buttons_list(items, category=None):
+    buttons = []
+    row = []
+    for i, item in enumerate(items, 1):
+        cb_data = f"test:{category}:{item}" if category else item
+        row.append(InlineKeyboardButton(item, callback_data=cb_data))
+        if i % 2 == 0:  # كل صف يحتوي على حقلين
+            buttons.append(row)
+            row = []
+    if row:
+        buttons.append(row)
+    return buttons
+
 # ===== التعامل مع الأزرار =====
 async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
@@ -83,10 +96,10 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     elif data == "categories":
-        keyboard = [[InlineKeyboardButton(cat, callback_data=f"category:{cat}")] for cat in tests_db.keys()]
+        keyboard = build_buttons_list(list(tests_db.keys()))
         if chat_id == ADMIN_ID:
-            keyboard.append([InlineKeyboardButton("إضافة تحليل", callback_data="add_test")])
-            keyboard.append([InlineKeyboardButton("إضافة قسم", callback_data="add_category")])
+            keyboard.append([InlineKeyboardButton("إضافة تحليل", callback_data="add_test"),
+                             InlineKeyboardButton("إضافة قسم", callback_data="add_category")])
             keyboard.append([InlineKeyboardButton("حذف قسم", callback_data="delete_category")])
         keyboard.append([InlineKeyboardButton("رجوع", callback_data="start_menu")])
         await query.edit_message_text("اختر القسم:", reply_markup=InlineKeyboardMarkup(keyboard))
@@ -94,13 +107,13 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     elif data.startswith("category:"):
         _, category = data.split(":")
-        keyboard = []
-        for test in tests_db[category]:
-            btns = [InlineKeyboardButton(test, callback_data=f"test:{category}:{test}")]
-            if chat_id == ADMIN_ID:
-                btns.append(InlineKeyboardButton("حذف", callback_data=f"delete:{category}:{test}"))
-            keyboard.append(btns)
-        keyboard.append([InlineKeyboardButton("رجوع", callback_data="categories")])
+        test_names = list(tests_db[category].keys())
+        keyboard = build_buttons_list(test_names, category)
+        if chat_id == ADMIN_ID:
+            # أزرار الحذف يمكن إضافتها لاحقاً في نافذة منفصلة إذا أحببت
+            keyboard.append([InlineKeyboardButton("رجوع", callback_data="categories")])
+        else:
+            keyboard.append([InlineKeyboardButton("رجوع", callback_data="categories")])
         await query.edit_message_text(f"قسم: {category}", reply_markup=InlineKeyboardMarkup(keyboard))
         await query.answer()
 
@@ -110,24 +123,11 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         if not test_data:
             await query.answer("لا يوجد هذا التحليل.")
             return
-        labels = {"male": "ذكر",
-                  "female": "أنثى",
-                  "children": "أطفال",
-                  "newborn": "حديث الولادة",
-                  "elderly": "كبار السن"}
+        labels = {"male": "ذكر", "female": "أنثى", "children": "أطفال", "newborn": "حديث الولادة", "elderly": "كبار السن"}
         ranges = [f"{labels[k]}: {v}" for k, v in test_data["normal_range"].items()]
         msg = f"{test_data['full_name']} | {test_data['description']} | " + " | ".join(ranges)
         await context.bot.send_message(chat_id, msg)
         await query.answer()
-
-    elif data.startswith("delete:") and chat_id == ADMIN_ID:
-        _, category, test_name = data.split(":")
-        if test_name in tests_db[category]:
-            del tests_db[category][test_name]
-            save_tests_db()
-            await query.edit_message_text(f"تم حذف التحليل: {test_name}")
-        else:
-            await query.answer("التحليل غير موجود.")
 
 # ===== التعامل مع الرسائل النصية =====
 async def handle_messages(update: Update, context: ContextTypes.DEFAULT_TYPE):
