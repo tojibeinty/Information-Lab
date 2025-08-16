@@ -2,6 +2,7 @@ from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Application, CommandHandler, CallbackQueryHandler, MessageHandler, filters, ContextTypes
 import json
 import os
+import re
 
 # ===== إعدادات البوت =====
 BOT_TOKEN = "8402805384:AAG-JnszBhh8GMDIvf1oeKNUvXi07MOXSWo"
@@ -21,7 +22,11 @@ else:
 
 if os.path.exists(TESTS_FILE):
     with open(TESTS_FILE, "r", encoding="utf-8") as f:
-        tests_db = json.load(f)
+        try:
+            tests_db = json.load(f)
+        except json.JSONDecodeError:
+            tests_db = {}
+            print("خطأ في ملف tests_db.json")
 else:
     tests_db = {}
 
@@ -36,6 +41,20 @@ def save_tests_db():
 
 # ===== حالة المستخدم =====
 user_states = {}
+
+# ===== دوال مساعدة =====
+def build_buttons_list(items, category):
+    """إنشاء أزرار InlineKeyboardButton بصفين لكل صف زرين"""
+    keyboard = []
+    row = []
+    for i, item in enumerate(items, 1):
+        row.append(InlineKeyboardButton(item, callback_data=f"test:{category}:{item}"))
+        if i % 2 == 0:
+            keyboard.append(row)
+            row = []
+    if row:
+        keyboard.append(row)
+    return keyboard
 
 # ===== دوال البوت =====
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -60,20 +79,6 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.callback_query.edit_message_text(welcome_text, reply_markup=InlineKeyboardMarkup(keyboard))
         await update.callback_query.answer()
 
-# ===== تنظيم الأزرار في صفوف من حقلين =====
-def build_buttons_list(items, category=None):
-    buttons = []
-    row = []
-    for i, item in enumerate(items, 1):
-        cb_data = f"test:{category}:{item}" if category else item
-        row.append(InlineKeyboardButton(item, callback_data=cb_data))
-        if i % 2 == 0:  # كل صف يحتوي على حقلين
-            buttons.append(row)
-            row = []
-    if row:
-        buttons.append(row)
-    return buttons
-
 # ===== التعامل مع الأزرار =====
 async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
@@ -96,10 +101,10 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     elif data == "categories":
-        keyboard = build_buttons_list(list(tests_db.keys()))
+        keyboard = [[InlineKeyboardButton(cat, callback_data=f"category:{cat}")] for cat in tests_db.keys()]
         if chat_id == ADMIN_ID:
-            keyboard.append([InlineKeyboardButton("إضافة تحليل", callback_data="add_test"),
-                             InlineKeyboardButton("إضافة قسم", callback_data="add_category")])
+            keyboard.append([InlineKeyboardButton("إضافة تحليل", callback_data="add_test")])
+            keyboard.append([InlineKeyboardButton("إضافة قسم", callback_data="add_category")])
             keyboard.append([InlineKeyboardButton("حذف قسم", callback_data="delete_category")])
         keyboard.append([InlineKeyboardButton("رجوع", callback_data="start_menu")])
         await query.edit_message_text("اختر القسم:", reply_markup=InlineKeyboardMarkup(keyboard))
@@ -107,27 +112,37 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     elif data.startswith("category:"):
         _, category = data.split(":")
+        category = category.strip()
+        if category not in tests_db:
+            await query.answer("القسم غير موجود.")
+            return
         test_names = list(tests_db[category].keys())
         keyboard = build_buttons_list(test_names, category)
-        if chat_id == ADMIN_ID:
-            # أزرار الحذف يمكن إضافتها لاحقاً في نافذة منفصلة إذا أحببت
-            keyboard.append([InlineKeyboardButton("رجوع", callback_data="categories")])
-        else:
-            keyboard.append([InlineKeyboardButton("رجوع", callback_data="categories")])
+        keyboard.append([InlineKeyboardButton("رجوع", callback_data="categories")])
         await query.edit_message_text(f"قسم: {category}", reply_markup=InlineKeyboardMarkup(keyboard))
         await query.answer()
 
     elif data.startswith("test:"):
         _, category, test_name = data.split(":")
-        test_data = tests_db[category].get(test_name)
+        test_data = tests_db.get(category, {}).get(test_name)
         if not test_data:
             await query.answer("لا يوجد هذا التحليل.")
             return
+        msg = f"التحليل: {test_data['full_name']}\nالوصف: {test_data['description']}\n\nالنطاق الطبيعي:\n"
         labels = {"male": "ذكر", "female": "أنثى", "children": "أطفال", "newborn": "حديث الولادة", "elderly": "كبار السن"}
-        ranges = [f"{labels[k]}: {v}" for k, v in test_data["normal_range"].items()]
-        msg = f"{test_data['full_name']} | {test_data['description']} | " + " | ".join(ranges)
+        for k, v in test_data["normal_range"].items():
+            msg += f"{labels[k]}: {v}\n"
         await context.bot.send_message(chat_id, msg)
         await query.answer()
+
+    elif data.startswith("delete:") and chat_id == ADMIN_ID:
+        _, category, test_name = data.split(":")
+        if test_name in tests_db.get(category, {}):
+            del tests_db[category][test_name]
+            save_tests_db()
+            await query.edit_message_text(f"تم حذف التحليل: {test_name}")
+        else:
+            await query.answer("التحليل غير موجود.")
 
 # ===== التعامل مع الرسائل النصية =====
 async def handle_messages(update: Update, context: ContextTypes.DEFAULT_TYPE):
